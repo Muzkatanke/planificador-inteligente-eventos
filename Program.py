@@ -4,6 +4,8 @@ import os
 flag = True
 
 while flag == True:
+    activate_events()
+    
     print("BIENVENIDO AL GESTOR DE EVENTOS")
     print("1.Agregar evento\n"+
           "2.Eliminar evento\n"+
