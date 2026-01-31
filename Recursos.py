@@ -1,5 +1,3 @@
-import os
-
 resources = {
     "Electricista" : 3,
     "Plomero" : 2,
@@ -13,8 +11,7 @@ resources = {
     "Kit de herramientas" : 5,
     "Equipos de red" : 5,
     "Accesorios de fontanería" : 5,
-    "Accesorios de electricidad" : 5
-}
+    "Accesorios de electricidad" : 5}
 
 event_inclusion = {"Instalacion eléctrica en local" : ["Electricista", "Accesorios de electricidad"],
                    "Mudanza con camión de carga": ["Obrero", "Camión de carga"],
@@ -36,8 +33,7 @@ def check_inclusion(event_name, event_resources):
             event_resources[resource] = event_resources.get(resource, 0) + 1
             print(f"El recurso '{resource}' ha sido incluido automáticamente en el evento '{event_name}'.")
     input("Presiona la tecla Enter para continuar...")
-    os.system("cls")
-
+    
 def check_exclusion(event_name):
     if event_name in event_exclusion:
         return event_exclusion[event_name]

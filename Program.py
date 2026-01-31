@@ -1,18 +1,23 @@
-from Evento import * 
 import os
+from Planificador import activate_events
+from Manejo_Eventos import event_actives, add_event, remove_event, view_events
 
 flag = True
-
 while flag == True:
-    activate_events()
+    activate_events(event_actives)
     
     print("BIENVENIDO AL GESTOR DE EVENTOS")
     print("1.Agregar evento\n"+
           "2.Eliminar evento\n"+
           "3.Ver eventos\n"+
           "4.Salir\n")
-    choice = int(input())
     
+    try: 
+        choice = int(input("Seleccione una opción: ")) 
+    except ValueError: 
+        print("Introduce un número válido") 
+        continue
+
     if choice == 1:
         os.system("cls")
         add_event()
