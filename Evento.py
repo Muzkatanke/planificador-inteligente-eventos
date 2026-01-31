@@ -5,14 +5,17 @@ import os
 class Event:
     def __init__(self, name=None, start=None, end=None):
         self.name = name
-        self.resources = {}
         self.start = start
         self.end = end
+        self.inclusion = []
+        self.exclusion = []
+        self.resources = {}
         self.activated = False
+        
  
 event_names = ["Instalación eléctrica en local", "Mudanza con camión de carga", 
                 "Construcción o reparación de inmueble",
-                "Mantenimiento de sistemas informáticos o de red", "Montaje de domótica"]
+                "Mantenimiento de sistemas informáticos o de red", "Montaje de domótica", "Mantenimiento de fontanería"]
 
 event_actives = [] #json
 
@@ -63,7 +66,20 @@ def find_available_start(new_event, desired_start, desired_end):
 
             start = earliest_end
             end = start + duration
-              
+
+def available_amount(key, current_selection = None): #Omitible, CREO
+    total = resources[key]
+
+    reserved = 0
+    for event in event_actives:
+        if not event.activated: 
+            reserved += event.resources.get(key, 0)
+    
+    if current_selection: 
+        reserved += current_selection.get(key, 0)
+
+    return total - reserved
+
 def add_event():
     new_event = Event()
     new_event_resources = {}
@@ -80,12 +96,24 @@ def add_event():
     
     os.system("cls")
 
-    desired_start = ask_date("Escriba la fecha de inicio del evento (dd/mm/aaaa hh:mm): ")
-    desired_end = ask_date("Escriba la fecha de culminación del evento (dd/mm/aaaa hh:mm): ")
- 
-    if desired_end <= desired_start:
-        print("La fecha de finalización debe ser despúes de la de inicialización.")
-        return  #checar esto
+    while True:
+        desired_start = ask_date("Escriba la fecha de inicio del evento (dd/mm/aaaa hh:mm): ")
+        desired_end = ask_date("Escriba la fecha de culminación del evento (dd/mm/aaaa hh:mm): ")
+    
+        if desired_end <= desired_start:
+            print("La fecha de finalización debe ser despúes de la de inicialización.")
+            input("Presiona la tecla Enter para continuar...")
+            os.system("cls")
+            continue
+
+        now = datetime.now()
+        if desired_start < now: 
+            print("No se pueden programar eventos en el pasado.")
+            input("Presiona la tecla Enter para continuar...")
+            os.system("cls")
+            continue
+
+        break
 
     print(f"El evento '{new_event.name}' ha sido programado desde {desired_start.strftime('%d/%m/%Y %H:%M')} hasta {desired_end.strftime('%d/%m/%Y %H:%M')}")
     input("Presiona la tecla Enter para continuar...")
@@ -96,15 +124,19 @@ def add_event():
         print("(Recurso : cantidad)")   
 
         cont = 1
-        for key, value in resources.items():
-            if value == 0:
+        for key in resources.keys():
+            current_availability = available_amount(key, new_event_resources)
+
+            if current_availability == 0:
                 print(f"{cont}.{key} : [NO DISPONIBLE]")
             else:
-                print(f"{cont}.{key} : {value}")
+                print(f"{cont}.{key} : {current_availability}")
 
             cont += 1
 
+
         option = int(input("\nElige el número del producto: "))
+
         if option == 0:
             new_event.resources = new_event_resources
             new_event.start, new_event.end = find_available_start(new_event, desired_start, desired_end)
@@ -112,21 +144,23 @@ def add_event():
             break
             
         key_selected = list(resources.keys())[option - 1]
+        ##check_inclusion(key_selected, new_event_resources)  
+        ##check_exclusion() 
 
         if resources[key_selected] == 0:
             print(f"El recurso '{key_selected}' no está disponible.")
             input("Presiona Enter para continuar...")
             os.system("cls")
             continue
-        
+
+        current_availability = available_amount(key_selected, new_event_resources)
         amount = int(input(f"Ingrese la cantidad para {key_selected}: "))
     
-        while amount < 0 or amount > resources[key_selected]:
-            amount = int(input(f"Ingrese un valor entre 0 y {resources[key_selected]} para {key_selected}: "))
+        while amount < 0 or amount > current_availability:
+            amount = int(input(f"Ingrese un valor entre 0 y {current_availability} para {key_selected}: "))
         
-        new_event_resources[key_selected] = new_event_resources.get(key_selected, 0) + amount
+        new_event_resources[key_selected] = new_event_resources.get(key_selected, 0) + amount   #Creo que todo esto se puede hacer directamente al parámetro de la instancia new_event
        
-        
         os.system("cls")
         print(f"\nHas agregado {amount} '{key_selected}'")
         input("Presiona la tecla Enter para continuar...")
@@ -134,17 +168,48 @@ def add_event():
         print("Recursos seleccionados:")
         print(new_event_resources)
 
-    print()
-    
-    
-
-
 def remove_event():
-    print("Función en construcción")
-    input("Presiona la tecla Enter para continuar...")
-    os.system("cls")
+    if not event_actives:
+        os.system("cls")
+        print("No hay eventos activos que eliminar")
+        input("Presiona la tecla Enter para continuar...")
+        os.system("cls")
+        return
+    
+    print("ELIJA QUE EVENTO ELIMINAR (0 para terminar)")
+    cont = 1
+    for event in event_actives:
+        print(f"{cont}.{event.name}")
+        cont += 1
+
+    option = int(input("\nElige el número del producto: "))
+    event_actives[option - 1]
+    if option == 0:
+        os.system("cls")
+        return
+    else:
+        os.system("cls")
+        for key, value in event.resources.items():
+                resources[key] += value
+        event_actives.pop(option - 1)
+
+        print(f"Se recuperaron {event.resources}")
+        input("Presiona la tecla Enter para continuar...")
+        os.system("cls")
 
 def view_events():
-    print("Función en construcción")
+    if not event_actives:
+        os.system("cls")
+        print("No hay eventos activos que ver")
+        input("Presiona la tecla Enter para continuar...")
+        os.system("cls")
+        return
+    
+    for event in event_actives:
+        print(f"{event.name}: Programado desde {event.start} hasta {event.end}. \nUtilizando los recursos: {event.resources}")
+        
     input("Presiona la tecla Enter para continuar...")
     os.system("cls")
+
+# Meter json
+# Meter inclusion y exclusion de recursos 
