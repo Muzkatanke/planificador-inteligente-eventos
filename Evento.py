@@ -121,7 +121,7 @@ def add_event():
     
     choice = int(input())
     new_event.name = event_names[choice-1]
-    
+
     os.system("cls")
 
     while True:
@@ -147,15 +147,24 @@ def add_event():
     input("Presiona la tecla Enter para continuar...")
     os.system("cls")
 
+    check_inclusion(new_event.name, new_event.resources)
+    excluded = check_exclusion(new_event.name)
+
     while True:
         print("ELIJA LOS RECURSOS DEL EVENTO (0 para terminar)")
         print("(Recurso : cantidad)")   
 
         cont = 1
         for key in resources.keys():
+
+            if key in excluded:
+                print(f"{cont}.{key} : [EXCLUIDO]") 
+                cont += 1 
+                continue
+
             current_availability = available_amount(key, new_event.resources)
 
-            if current_availability == 0:
+            if current_availability ==  0:
                 print(f"{cont}.{key} : [NO DISPONIBLE]")
             else:
                 print(f"{cont}.{key} : {current_availability}")
@@ -171,26 +180,30 @@ def add_event():
             event_actives.append(new_event)
             break
             
-        key_selected = list(resources.keys())[option - 1]
-        ##check_inclusion(key_selected, new_event_resources)  
-        ##check_exclusion() 
+        resource_selected = list(resources.keys())[option - 1]
 
-        if resources[key_selected] == 0:
-            print(f"El recurso '{key_selected}' no está disponible.")
+        if resources[resource_selected] == 0:
+            print(f"El recurso '{resource_selected}' no está disponible.")
+            input("Presiona Enter para continuar...")
+            os.system("cls")
+            continue
+        
+        if resource_selected in excluded:
+            print(f"El recurso '{resource_selected}' ha sido excluído debido a la naturaleza del evento.")
             input("Presiona Enter para continuar...")
             os.system("cls")
             continue
 
-        current_availability = available_amount(key_selected, new_event.resources)
-        amount = int(input(f"Ingrese la cantidad para {key_selected}: "))
+        current_availability = available_amount(resource_selected, new_event.resources)
+        amount = int(input(f"Ingrese la cantidad para {resource_selected}: "))
     
         while amount < 0 or amount > current_availability:
-            amount = int(input(f"Ingrese un valor entre 0 y {current_availability} para {key_selected}: "))
+            amount = int(input(f"Ingrese un valor entre 0 y {current_availability} para {resource_selected}: "))
         
-        new_event.resources[key_selected] = new_event.resources.get(key_selected, 0) + amount
+        new_event.resources[resource_selected] = new_event.resources.get(resource_selected, 0) + amount
        
         os.system("cls")
-        print(f"\nHas agregado {amount} '{key_selected}'")
+        print(f"\nHas agregado {amount} '{resource_selected}'")
         input("Presiona la tecla Enter para continuar...")
         os.system("cls")
         print("Recursos seleccionados:")
@@ -240,4 +253,3 @@ def view_events():
     os.system("cls")
 
 # Meter json
-# Meter inclusion y exclusion de recursos 
