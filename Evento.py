@@ -1,7 +1,10 @@
 from datetime import datetime
 
 class Event:
+    _id_counter = 1 
+
     def __init__(self, name=None, start=None, end=None):
+        self.id = Event._id_counter 
         self.name = name
         self.start = start
         self.end = end

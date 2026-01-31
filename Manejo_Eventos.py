@@ -172,7 +172,8 @@ def add_event():
     new_event.start, new_event.end = find_available_start(new_event, desired_start, desired_end, event_actives, resources)
     event_actives.append(new_event)
     alert("Evento creado exitosamente.")
-    print("\nResumen del evento creado:") 
+    print("Resumen del evento creado:") 
+    print(f"ID: {new_event.id}")
     print(f"Nombre: {new_event.name}") 
     print(f"Inicio: {new_event.start}") 
     print(f"Fin: {new_event.end}") 
@@ -183,15 +184,13 @@ def add_event():
 
 def remove_event():
     if not event_actives:
-        print("No hay eventos activos que eliminar")
-        input("Presiona la tecla Enter para continuar...")
-        os.system("cls")
+        alert("No hay eventos activos que eliminar")
         return
     
     print("ELIJA QUE EVENTO ELIMINAR (0 para terminar)")
     cont = 1
     for event in event_actives:
-        print(f"{cont}.{event.name}")
+        print(f"{cont}. [ID {event.id}] {event.name}")
         cont += 1
 
     option = int(input("\nElige el número del evento: "))
@@ -202,21 +201,15 @@ def remove_event():
         for key, value in event.resources.items():
             resources[key] += value
         event_actives.pop(option - 1)
-
-        print(f"Se recuperaron {event.resources}")
-        input("Presiona la tecla Enter para continuar...")
-        os.system("cls")
+        alert(f"Evento [ID {event.id}] eliminado. Se recuperaron {event.resources}")
 
 def view_events():
     if not event_actives:
-        os.system("cls")
-        print("No hay eventos activos que ver")
-        input("Presiona la tecla Enter para continuar...")
-        os.system("cls")
+        alert("No hay eventos activos que ver")
         return
     
     for event in event_actives:
-        print(f"{event.name}: Programado desde {event.start} hasta {event.end}. \nUtilizando los recursos: {event.resources}")
+        print(f"[ID {event.id}] {event.name}: Programado desde {event.start} hasta {event.end}. \nUtilizando los recursos: {event.resources}")
         
     input("Presiona la tecla Enter para continuar...")
     os.system("cls")
