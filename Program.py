@@ -3,7 +3,7 @@ from Planificador import activate_events
 from Manejo_Eventos import event_actives, add_event, remove_event, view_events
 
 flag = True
-while flag == True:
+while flag:
     activate_events(event_actives)
     
     print("BIENVENIDO AL GESTOR DE EVENTOS")
@@ -31,6 +31,3 @@ while flag == True:
         flag = False
     else:
         print("Introduce un dato válido")
-   
-
-    
