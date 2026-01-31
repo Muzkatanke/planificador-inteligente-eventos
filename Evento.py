@@ -29,6 +29,36 @@ def activate_events():
             event.activated = True
             print(f"El evento '{event.name}' ha comenzado y se asignaron sus recursos.")
 
+def activate_events():
+    now = datetime.now()
+
+    for event in event_actives:
+        if event.start <= now and not event.activated:
+
+            enough = True
+            for key, value in event.resources.items():
+                if resources[key] < value:
+                    print(f"Error: no hay suficientes '{key}' para activar el evento '{event.name}'.")
+                    enough = False
+                    break
+
+            if enough:
+                for key, value in event.resources.items():
+                    resources[key] -= value
+                event.activated = True
+                print(f"El evento '{event.name}' ha comenzado y se asignaron sus recursos.")
+
+def deactivate_events():
+    now = datetime.now()
+
+    for event in event_actives:
+        if event.end <= now and event.activated:
+            for key, value in event.resources.items():
+                resources[key] += value
+            event.activated = False
+            print(f"El evento '{event.name}' ha finalizado y se liberaron sus recursos.")
+
+
 def ask_date(message):
     while True:
         date_str = input(message)
@@ -67,7 +97,7 @@ def find_available_start(new_event, desired_start, desired_end):
             start = earliest_end
             end = start + duration
 
-def available_amount(key, current_selection = None): #Omitible, CREO
+def available_amount(key, current_selection): #Omitible, CREO
     total = resources[key]
 
     reserved = 0
@@ -75,14 +105,12 @@ def available_amount(key, current_selection = None): #Omitible, CREO
         if not event.activated: 
             reserved += event.resources.get(key, 0)
     
-    if current_selection: 
-        reserved += current_selection.get(key, 0)
+    reserved += current_selection.get(key, 0)
 
     return total - reserved
 
 def add_event():
     new_event = Event()
-    new_event_resources = {}
 
     print("SELECCIONE UN EVENTO")
     print("1.Instalación eléctrica en local\n"+
@@ -125,7 +153,7 @@ def add_event():
 
         cont = 1
         for key in resources.keys():
-            current_availability = available_amount(key, new_event_resources)
+            current_availability = available_amount(key, new_event.resources)
 
             if current_availability == 0:
                 print(f"{cont}.{key} : [NO DISPONIBLE]")
@@ -134,11 +162,11 @@ def add_event():
 
             cont += 1
 
-
         option = int(input("\nElige el número del producto: "))
-
         if option == 0:
-            new_event.resources = new_event_resources
+            if not new_event.resources:
+                print("Debe asignar al menos un recurso al evento.")
+                continue
             new_event.start, new_event.end = find_available_start(new_event, desired_start, desired_end)
             event_actives.append(new_event)
             break
@@ -153,20 +181,20 @@ def add_event():
             os.system("cls")
             continue
 
-        current_availability = available_amount(key_selected, new_event_resources)
+        current_availability = available_amount(key_selected, new_event.resources)
         amount = int(input(f"Ingrese la cantidad para {key_selected}: "))
     
         while amount < 0 or amount > current_availability:
             amount = int(input(f"Ingrese un valor entre 0 y {current_availability} para {key_selected}: "))
         
-        new_event_resources[key_selected] = new_event_resources.get(key_selected, 0) + amount   #Creo que todo esto se puede hacer directamente al parámetro de la instancia new_event
+        new_event.resources[key_selected] = new_event.resources.get(key_selected, 0) + amount
        
         os.system("cls")
         print(f"\nHas agregado {amount} '{key_selected}'")
         input("Presiona la tecla Enter para continuar...")
         os.system("cls")
         print("Recursos seleccionados:")
-        print(new_event_resources)
+        print(new_event.resources)
 
 def remove_event():
     if not event_actives:
