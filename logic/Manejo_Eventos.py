@@ -168,6 +168,8 @@ def add_event():
 
             adjusted_end = desired_end
             for ev in event_actives:
+                if not ev.activated:
+                    continue
                 if new_start < ev.end and ev.start < desired_end:
                     for key, amount in new_event.resources.items():
                         ev_amount = ev.resources.get(key, 0)

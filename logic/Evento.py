@@ -39,33 +39,34 @@ def find_available_start(new_event, desired_start, desired_end, event_actives, r
 
     while True:
         conflict = False
-        blocking_events = []
+        total_usage = {key: 0 for key in resources.keys()}
 
         for ev in event_actives:
+            if not ev.activated: 
+                continue
             if start < ev.end and ev.start < end:
-                for key, amount in new_event.resources.items():
-                    ev_amount = ev.resources.get(key, 0)
-                    if ev_amount > 0 and amount + ev_amount > resources[key]:
-                        conflict = True
-                        blocking_events.append(ev)
-                        break  
+                for key, ev_amount in ev.resources.items():
+                    total_usage[key] += ev_amount
+
+        for key, amount in new_event.resources.items():
+            if total_usage.get(key, 0) + amount > resources[key]:
+                conflict = True
+                break
 
         if not conflict:
             return start, end
         else:
-            earliest_start = min(ev.start for ev in blocking_events)
+            earliest_start = min(ev.start for ev in event_actives if ev.activated and start < ev.end and ev.start < end)
             end = earliest_start
             if end <= start:
                 raise ValueError("No hay espacio disponible para programar el evento sin solapamiento.")
 
-
-
-def available_amount(key, current_selection, event_actives, resources): #Omitible, CREO
+def available_amount(key, current_selection, event_actives, resources):
     total = resources[key]
 
     reserved = 0
     for event in event_actives:
-        if not event.activated: 
+        if event.activated: 
             reserved += event.resources.get(key, 0)
     reserved += current_selection.get(key, 0)
 

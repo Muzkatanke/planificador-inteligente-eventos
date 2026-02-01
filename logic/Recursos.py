@@ -1,7 +1,6 @@
 import os
 from Evento import  available_amount
 
-
 resources = {
     "Electricista" : 3,
     "Plomero" : 2,
