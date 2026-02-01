@@ -5,6 +5,7 @@ class Event:
 
     def __init__(self, name=None, start=None, end=None):
         self.id = Event._id_counter 
+        Event._id_counter += 1
         self.name = name
         self.start = start
         self.end = end
@@ -35,31 +36,29 @@ def ask_date(message):
 def find_available_start(new_event, desired_start, desired_end, event_actives, resources):
     start = desired_start
     end = desired_end
-    duration = desired_end - desired_start
 
     while True:
         conflict = False
         blocking_events = []
 
         for ev in event_actives:
-            if ev.start < end and ev.end > start:
+            if start < ev.end and ev.start < end:
                 for key, amount in new_event.resources.items():
-                    if ev.resources.get(key, 0) > 0:
-                        if amount + ev.resources.get(key, 0) > resources[key]:
-                            conflict = True
-                            blocking_events.append(ev)
-                            break  
+                    ev_amount = ev.resources.get(key, 0)
+                    if ev_amount > 0 and amount + ev_amount > resources[key]:
+                        conflict = True
+                        blocking_events.append(ev)
+                        break  
 
         if not conflict:
             return start, end
         else:
-            earliest_end = None
-            for ev in blocking_events:
-                if earliest_end is None or ev.end < earliest_end:
-                    earliest_end = ev.end
+            earliest_start = min(ev.start for ev in blocking_events)
+            end = earliest_start
+            if end <= start:
+                raise ValueError("No hay espacio disponible para programar el evento sin solapamiento.")
 
-            start = earliest_end
-            end = start + duration
+
 
 def available_amount(key, current_selection, event_actives, resources): #Omitible, CREO
     total = resources[key]

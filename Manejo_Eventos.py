@@ -11,19 +11,6 @@ def alert(message):
     input("Presiona Enter para continuar...")
     os.system("cls")
 
-import os
-from datetime import datetime
-from Recursos import resources, check_exclusion, check_inclusion
-from Evento import Event, event_names, ask_date, find_available_start, available_amount
-
-event_actives = []
-
-def alert(message):
-    os.system("cls")
-    print(message)
-    input("Presiona Enter para continuar...")
-    os.system("cls")
-
 def add_event():
     new_event = Event()
    
@@ -48,8 +35,11 @@ def add_event():
     os.system("cls")
 
     if not check_inclusion(new_event.name, new_event.resources, event_actives, resources):
-        alert(f"No se puede realizar el evento '{new_event.name}' porque no hay recursos obligatorios disponibles.")
-        return
+        alert(f"Los recursos obligatorios para '{new_event.name}' no están disponibles actualmente.\n"
+              "El evento deberá reprogramarse automáticamente hasta que estén libres.")
+        auto_reprogram = True
+    else:
+        auto_reprogram = False
 
     print("Recursos obligatorios asignados automáticamente:")
     print(new_event.resources)
@@ -124,6 +114,7 @@ def add_event():
                     if 1 <= amount <= max_remaining:
                         new_event.resources[resource_selected] = current_assigned + amount
                         alert(f"Has agregado {amount} '{resource_selected}' (evento será reprogramado).")
+                        auto_reprogram = True
                         break
                     else:
                         alert(f"Debe ingresar un valor entre 0 y {max_remaining}")
@@ -156,20 +147,73 @@ def add_event():
         print("Recursos seleccionados:") 
         print(new_event.resources)
 
-    while True:
-        os.system("cls")
-        desired_start = ask_date("Escriba la fecha de inicio del evento (dd/mm/aaaa hh:mm): ")
-        desired_end = ask_date("Escriba la fecha de culminación del evento (dd/mm/aaaa hh:mm): ")
-    
-        if desired_end <= desired_start:
-            alert("La fecha de finalización debe ser después de la inicialización.")
-            continue
-        if desired_start < datetime.now(): 
-            alert("No se pueden programar eventos en el pasado.")
-            continue
-        break
+    if auto_reprogram:
+        new_start, _ = find_available_start(new_event, datetime.now(), datetime.now(), event_actives, resources)
 
-    new_event.start, new_event.end = find_available_start(new_event, desired_start, desired_end, event_actives, resources)
+        alert(f"La siguiente fecha válida de inicio para '{new_event.name}' es {new_start}.")
+        confirm = input("¿Estás de acuerdo con esta fecha de inicio? (s/n): ")
+
+        if confirm.lower() != "s":
+            for key, value in new_event.resources.items():
+                resources[key] += value
+            alert("Evento cancelado, recursos liberados.")
+            return
+
+        while True:
+            desired_end = ask_date("Escriba la fecha de culminación del evento (dd/mm/aaaa hh:mm): ")
+
+            if desired_end <= new_start:
+                alert("La fecha de finalización debe ser después de la inicialización.")
+                continue
+
+            adjusted_end = desired_end
+            for ev in event_actives:
+                if new_start < ev.end and ev.start < desired_end:
+                    for key, amount in new_event.resources.items():
+                        ev_amount = ev.resources.get(key, 0)
+                        if ev_amount > 0 and amount + ev_amount > resources[key]:
+                            adjusted_end = ev.start
+                            alert(f"El evento se solapaba con [ID {ev.id}] {ev.name}. "
+                                f"Se ha ajustado la fecha de finalización a {adjusted_end}.")
+                            break
+
+            if adjusted_end <= new_start:
+                alert("No hay espacio disponible para programar el evento sin solapamiento.")
+                for key, value in new_event.resources.items():
+                    resources[key] += value
+                return
+
+            new_event.start, new_event.end = new_start, adjusted_end
+            break
+    else:
+        while True:
+            os.system("cls")
+            desired_start = ask_date("Escriba la fecha de inicio del evento (dd/mm/aaaa hh:mm): ")
+            desired_end = ask_date("Escriba la fecha de culminación del evento (dd/mm/aaaa hh:mm): ")
+
+            if desired_end <= desired_start:
+                alert("La fecha de finalización debe ser después de la inicialización.")
+                continue
+            if desired_start < datetime.now(): 
+                alert("No se pueden programar eventos en el pasado.")
+                continue
+            break
+
+        new_start, new_end = find_available_start(new_event, desired_start, desired_end, event_actives, resources)
+
+        if (new_start, new_end) != (desired_start, desired_end):
+            alert(f"El evento '{new_event.name}' se solapa con otros.\n"
+                  f"Se ha reprogramado automáticamente desde {new_start} hasta {new_end}.")
+            confirm = input("¿Aceptar esta fecha sugerida? (s/n): ")
+            if confirm.lower() != "s":
+                for key, value in new_event.resources.items():
+                    resources[key] += value
+                alert("Evento cancelado, recursos liberados.")
+                return
+            new_event.start, new_event.end = new_start, new_end
+        else:
+            new_event.start, new_event.end = desired_start, desired_end
+
     event_actives.append(new_event)
     alert("Evento creado exitosamente.")
     print("Resumen del evento creado:") 
@@ -180,7 +224,6 @@ def add_event():
     print(f"Recursos: {new_event.resources}")
     input("Presiona Enter para continuar...")
     os.system("cls")
-
 
 def remove_event():
     if not event_actives:
