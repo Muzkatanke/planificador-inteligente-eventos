@@ -1,56 +1,33 @@
-import os
-from Evento import  available_amount
+from logic.Datos import resources, rules
 
-resources = {
-    "Electricista" : 3,
-    "Plomero" : 2,
-    "Carpintero" : 2,
-    "Obrero" : 5,
-    "Técnico de redes": 3,
-    "Técnico de domótica": 3,
-    "Camión de carga" : 2,
-    "Sensores y dispositivos de domótica" : 5,
-    "Materiales de construcción" : 5,
-    "Kit de herramientas" : 5,
-    "Equipos de red" : 5,
-    "Accesorios de fontanería" : 5,
-    "Accesorios de electricidad" : 5}
+def check_resources_inclusion(new_event_resources, event_actives, alert, available_amount):
+    valid = True
 
-event_inclusion = {"Instalación eléctrica en local" : ["Electricista", "Accesorios de electricidad"],
-                   "Mudanza con camión de carga": ["Obrero", "Camión de carga"],
-                   "Construcción o reparación de inmueble": ["Obrero", "Materiales de construcción"],
-                   "Mantenimiento de sistemas informáticos o de red": ["Técnico de redes", "Equipos de red"],
-                   "Montaje de domótica": ["Técnico de domótica", "Sensores y dispositivos de domótica"],
-                   "Mantenimiento de fontanería": ["Plomero", "Accesorios de fontanería"]}
+    for resource in list(new_event_resources.keys()):
+        if resource in rules:
+            included = rules[resource]["include"]
+            for x in included: 
+                if x in new_event_resources:
+                    continue
+                else:
+                    alert(f"ADVERTENCIA: Su evento requiere la inclusión obligatoria del recurso '{x}', ya que {resource} lo necesita para funcionar.")
+                    current_availability = available_amount(x, new_event_resources, event_actives, resources)
+                    if current_availability <= 0:
+                        alert(f"ERROR: El recurso '{x}' no se encuentra actualmente disponible.")
+                        new_event_resources[x] = new_event_resources.get(x, 0) + 1
+                        valid = False
+                    else:
+                        new_event_resources[x] = new_event_resources.get(x, 0) + 1
+                        alert(f"El recurso '{x}' ha sido incluido automáticamente.")
+    return valid
 
-event_exclusion = {"Instalación eléctrica en local" : ["Plomero", "Accesorios de fontanería"],
-                   "Mudanza con camión de carga": ["Electricista", "Técnico de redes"],
-                   "Construcción o reparación de inmueble": ["Técnico de redes", "Técnico de domótica"],
-                   "Mantenimiento de sistemas informáticos o de red": ["Plomero", "Materiales de construcción"],
-                   "Montaje de domótica": ["Obrero", "Cammión de carga"],
-                   "Mantenimiento de fontanería": ["Electricista", "Equipos de red"]}
-
-def check_inclusion(event_name, event_resources, event_actives, resources):
-    required = event_inclusion.get(event_name, [])
+def check_resources_exclusion(new_event_resources):
+    excluded_set = set()
     
-    for resource in required:
-        current_availability = available_amount(resource, event_resources, event_actives, resources)
-        if current_availability <= 0:
-            print(f"ERROR: No hay disponibilidad de '{resource}' para el evento '{event_name}'.")
-            input("Presiona Enter para continuar...")
-            os.system("cls")
-            return False
-    
-    for resource in required:
-        event_resources[resource] = event_resources.get(resource, 0) + 1
-        print(f"El recurso '{resource}' ha sido incluido automáticamente en el evento '{event_name}'.")
-        input("Presiona la tecla Enter para continuar...")
-        os.system("cls")
-    return True
-
-    
-def check_exclusion(event_name):
-    if event_name in event_exclusion:
-        return event_exclusion[event_name]
-    return []
-
+    for resource in list(new_event_resources.keys()):
+        if resource in rules:
+            excluded = rules[resource]["exclude"]
+            for x in excluded: 
+                excluded_set.add(x)    
+    return excluded_set
+ 

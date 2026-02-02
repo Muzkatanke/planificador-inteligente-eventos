@@ -1,7 +1,8 @@
 import os
 from datetime import datetime
-from Recursos import resources, check_exclusion, check_inclusion
-from Evento import Event, event_names, ask_date, find_available_start, available_amount
+from logic.Datos import resources
+from logic.Recursos import check_resources_inclusion, check_resources_exclusion
+from logic.Evento import Event, event_names, ask_date, find_available_start, available_amount
 
 event_actives = []
 
@@ -14,49 +15,42 @@ def alert(message):
 def add_event():
     new_event = Event()
    
-    print("SELECCIONE UN EVENTO")
-    print("1.Instalación eléctrica en local\n"+
-          "2.Mudanza con camión de carga\n"+
-          "3.Construcción o reparación de inmueble\n"+
-          "4.Mantenimiento de sistemas informáticos o de red\n"+
-          "5.Montaje de domótica\n"+
-          "6.Mantenimiento de fontanería\n")
-    
-    try: 
-        choice = int(input("Ingrese el número del evento: ")) 
-        if choice < 1 or choice > len(event_names): 
-            alert("Opción inválida.") 
-            return 
-    except ValueError: 
-        alert("Debe ingresar un número válido.") 
-        return
+    while True:
+        print("SELECCIONE UN EVENTO (0 para terminar)")
+        print("1.Instalación eléctrica en local\n"+
+            "2.Mudanza con camión de carga\n"+
+            "3.Construcción o reparación de inmueble\n"+
+            "4.Mantenimiento de sistemas informáticos o de red\n"+
+            "5.Montaje de domótica\n"+
+            "6.Mantenimiento de fontanería")
+        
+        try: 
+            choice = int(input("\nIngrese el número del evento: "))  
+            if 1 <= choice <= 6:
+                break
+            if choice == 0:
+                return
+            else:
+                alert("Debe ingresar un número válido.")
+                continue
+        except ValueError: 
+            alert("Debe ingresar un número válido.") 
+            continue
     
     new_event.name = event_names[choice-1]
     os.system("cls")
-
-    if not check_inclusion(new_event.name, new_event.resources, event_actives, resources):
-        alert(f"Los recursos obligatorios para '{new_event.name}' no están disponibles actualmente.\n"
-              "El evento deberá reprogramarse automáticamente hasta que estén libres.")
-        auto_reprogram = True
-    else:
-        auto_reprogram = False
-
-    print("Recursos obligatorios asignados automáticamente:")
-    print(new_event.resources)
-    input("Presiona Enter para continuar...")
-    os.system("cls")
-
-    excluded = check_exclusion(new_event.name)
 
     while True:
         print("ELIJA LOS RECURSOS DEL EVENTO (0 para terminar)")
         print("(Recurso : cantidad)")   
 
         cont = 1
+        excluded_set = check_resources_exclusion(new_event.resources)
+
         for key in resources.keys():
-            if key in excluded:
-                print(f"{cont}.{key} : [EXCLUIDO]") 
-            else: 
+            if key in excluded_set:
+                print(f"{cont}.{key} : [EXCLUIDO]")
+            else:
                 current_availability = available_amount(key, new_event.resources, event_actives, resources) 
                 if current_availability <= 0:
                     print(f"{cont}.{key} : [NO DISPONIBLE]")
@@ -82,8 +76,8 @@ def add_event():
 
         resource_selected = list(resources.keys())[option - 1]
 
-        if resource_selected in excluded:
-            alert(f"El recurso '{resource_selected}' ha sido excluído debido a la naturaleza del evento.")
+        if resource_selected in excluded_set: 
+            alert(f"El recurso '{resource_selected}' está excluido debido a la selección actual.")
             continue
 
         current_availability = available_amount(resource_selected, new_event.resources, event_actives, resources) 
@@ -114,7 +108,6 @@ def add_event():
                     if 1 <= amount <= max_remaining:
                         new_event.resources[resource_selected] = current_assigned + amount
                         alert(f"Has agregado {amount} '{resource_selected}' (evento será reprogramado).")
-                        auto_reprogram = True
                         break
                     else:
                         alert(f"Debe ingresar un valor entre 0 y {max_remaining}")
@@ -138,14 +131,26 @@ def add_event():
                         continue
                     new_event.resources[resource_selected] = current_assigned + amount
                     alert(f"Has agregado {amount} '{resource_selected}'")
+                    
+                    valid_inclusion = check_resources_inclusion(new_event.resources, event_actives, alert, available_amount)
+                    if not valid_inclusion:
+                        auto_reprogram = True
                     break
                 else:
                     alert(f"Debe ingresar un valor entre 0 y {current_availability}")
             except ValueError:
                 alert(f"Debe ingresar un valor entre 0 y {current_availability}")
 
-        print("Recursos seleccionados:") 
-        print(new_event.resources)
+    if not check_resources_inclusion(new_event.resources, event_actives, alert, available_amount):
+        alert(f"Los recursos obligatorios para '{new_event.name}' no están disponibles actualmente.\n"
+              "El evento se reprogramará automáticamente hasta que estén libres.")
+        auto_reprogram = True
+    else:
+        auto_reprogram = False
+
+    excluded_set = check_resources_exclusion(new_event.resources)
+    
+    alert(f"Recursos seleccionados para el evento:\n {new_event.resources}")
 
     if auto_reprogram:
         new_start, _ = find_available_start(new_event, datetime.now(), datetime.now(), event_actives, resources)
@@ -238,23 +243,27 @@ def remove_event():
         print(f"{cont}. [ID {event.id}] {event.name}")
         cont += 1
 
-    option = int(input("\nElige el número del evento: "))
-    if option == 0:
+    try:
+        option = int(input("\nElige el número del evento: "))
+    except ValueError:
+        alert("Entrada inválida.")
         return
-    else:
-        os.system("cls")
+
+    if option == 0 or option > len(event_actives):
+        return
+
+    event = event_actives.pop(option - 1)
+
+    if event.activated:
         for key, value in event.resources.items():
             resources[key] += value
-        event_actives.pop(option - 1)
-        alert(f"Evento [ID {event.id}] eliminado. Se recuperaron {event.resources}")
 
+    alert(f"Evento [ID {event.id}] eliminado. Se recuperaron los recursos: {event.resources}")
+    
 def view_events():
     if not event_actives:
         alert("No hay eventos activos que ver")
         return
     
     for event in event_actives:
-        print(f"[ID {event.id}] {event.name}: Programado desde {event.start} hasta {event.end}. \nUtilizando los recursos: {event.resources}")
-        
-    input("Presiona la tecla Enter para continuar...")
-    os.system("cls")
+        alert(f"[ID {event.id}] {event.name}: Programado desde {event.start} hasta {event.end}. \nUtilizando los recursos: {event.resources}")

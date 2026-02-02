@@ -3,14 +3,12 @@ from datetime import datetime
 class Event:
     _id_counter = 1 
 
-    def __init__(self, name=None, start=None, end=None):
-        self.id = Event._id_counter 
+    def __init__(self):
+        self.id = Event._id_counter
         Event._id_counter += 1
-        self.name = name
-        self.start = start
-        self.end = end
-        self.inclusion = []
-        self.exclusion = []
+        self.name = None
+        self.start = None
+        self.end = None
         self.resources = {}
         self.activated = False
         
@@ -21,8 +19,6 @@ event_names = ["Instalación eléctrica en local",
                 "Mantenimiento de sistemas informáticos o de red", 
                 "Montaje de domótica", 
                 "Mantenimiento de fontanería"]
-
-event_actives = [] #json
 
 def ask_date(message):
     while True:
@@ -71,3 +67,4 @@ def available_amount(key, current_selection, event_actives, resources):
     reserved += current_selection.get(key, 0)
 
     return total - reserved
+

@@ -17,7 +17,7 @@ def main():
         show_menu()
         
         try: 
-            choice = int(input("Seleccione una opción: ")) 
+            choice = int(input("\nSeleccione una opción: ")) 
         except ValueError: 
             print("Introduce un número válido!!") 
             continue
