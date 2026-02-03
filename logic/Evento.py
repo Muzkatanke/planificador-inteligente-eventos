@@ -32,14 +32,13 @@ def ask_date(message):
 def find_available_start(new_event, desired_start, desired_end, event_actives, resources):
     start = desired_start
     end = desired_end
+    duration = end - start   
 
     while True:
         conflict = False
         total_usage = {key: 0 for key in resources.keys()}
 
         for ev in event_actives:
-            if not ev.activated: 
-                continue
             if start < ev.end and ev.start < end:
                 for key, ev_amount in ev.resources.items():
                     total_usage[key] += ev_amount
@@ -51,24 +50,42 @@ def find_available_start(new_event, desired_start, desired_end, event_actives, r
 
         if not conflict:
             return start, end
-        else:
-            try:
-                earliest_start = min(ev.start for ev in event_actives if ev.activated and start < ev.end and ev.start < end)
-            except ValueError:
-                raise ValueError("No hay espacio disponible para programar el evento sin solapamiento.")
-            
-            end = earliest_start
-            if end <= start:
-                raise ValueError("No hay espacio disponible para programar el evento sin solapamiento.")
+
+        try:
+            latest_end = max(
+                ev.end
+                for ev in event_actives
+                if start < ev.end and ev.start < end
+            )
+        except ValueError:
+            raise ValueError("No hay espacio disponible para programar el evento sin solapamiento.")
+
+        start = latest_end
+        end = start + duration
+
+        if end <= start:
+            raise ValueError("No hay espacio disponible para programar el evento sin solapamiento.")
+
 
 def available_amount(key, current_selection, event_actives, resources):
     total = resources[key]
 
     reserved = 0
     for event in event_actives:
-        if event.activated: 
-            reserved += event.resources.get(key, 0)
+        reserved += event.resources.get(key, 0)
+
     reserved += current_selection.get(key, 0)
+
+    return total - reserved
+
+def available_amount_interval(key, current_selection, event_actives, resources, start, end):
+    total = resources[key]
+    
+    reserved = 0
+    reserved += current_selection.get(key, 0)
+    for event in event_actives:
+        if start < event.end and event.start < end:
+            reserved += event.resources.get(key, 0)
 
     return total - reserved
 

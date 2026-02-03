@@ -15,7 +15,7 @@ def activate_events(event_actives):
 
 def desactivate_events(event_actives):
     now = datetime.now()
-
+    
     for event in event_actives:
         if event.activated and event.end <= now:
             event.activated = False
