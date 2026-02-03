@@ -1,13 +1,1 @@
-[
-    {
-        "id": 2,
-        "name": "Instalaci\u00f3n el\u00e9ctrica en local",
-        "start": "12/12/2026 12:13",
-        "end": "12/12/2026 12:14",
-        "resources": {
-            "Electricista": 2,
-            "Accesorios de electricidad": 1
-        },
-        "activated": false
-    }
-]
+[]

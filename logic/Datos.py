@@ -21,7 +21,7 @@ rules = {
     "Accesorios de fontanería": {"include": ["Plomero"], "exclude": ["Electricista", "Accesorios de electricidad"]},
     "Carpintero": {"include": ["Kit de herramientas"], "exclude": ["Plomero", "Accesorios de fontanería"]},
     "Kit de herramientas": {"include": [], "exclude": []},
-    "Obrero": {"include": ["Materiales de construcción", "Kit de herramientas"], "exclude": []},
+    "Obrero": {"include": ["Kit de herramientas"], "exclude": []},
     "Materiales de construcción": {"include": ["Obrero", "Camión de carga"], "exclude": []},
     "Operador de camión de carga" : {"include": ["Camión de carga"], "exclude": []},
     "Camión de carga": {"include": ["Operador de camión de carga"], "exclude": []},
@@ -29,3 +29,5 @@ rules = {
     "Equipos de red": {"include": ["Técnico de redes"], "exclude": []},
     "Técnico de domótica": {"include": ["Sensores y dispositivos de domótica", "Kit de herramientas"], "exclude": []},
     "Sensores y dispositivos de domótica": {"include": ["Técnico de domótica"], "exclude": []}}
+
+

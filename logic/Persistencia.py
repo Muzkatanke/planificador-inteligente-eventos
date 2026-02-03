@@ -25,7 +25,7 @@ def dict_to_event(dict_event):
     event.name = dict_event["name"]
     event.start = datetime.strptime(dict_event["start"], "%d/%m/%Y %H:%M") if dict_event["start"] else None
     event.end = datetime.strptime(dict_event["end"], "%d/%m/%Y %H:%M") if dict_event["end"] else None
-    event.resources = dict_event["resources"],
+    event.resources = dict_event["resources"]
     event.activated = dict_event["activated"]
     return event
 
