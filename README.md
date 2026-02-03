@@ -142,3 +142,17 @@ Al ejecutar main.py, se mostrará el menú principal:
 - **Manejo_Eventos.py**: funciones para agregar, eliminar y ver eventos.
 
 - **Persistencia.py**: gestiona la lectura y escritura de eventos en JSON.
+
+### Archivo de Datos de Ejemplo
+
+El proyecto incluye un archivo `eventos_ejemplo.json` dentro de la carpeta `storage/`.  
+Este archivo contiene tres eventos ficticios que ilustran el formato utilizado por el sistema para almacenar información:
+
+- ID del evento  
+- Nombre  
+- Fecha de inicio y fin  
+- Recursos asignados  
+- Estado de activación  
+
+Este archivo sirve como referencia para comprender cómo se estructuran los datos y cómo el sistema gestiona la persistencia.
+
