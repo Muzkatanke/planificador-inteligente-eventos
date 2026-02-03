@@ -14,7 +14,6 @@ def check_resources_inclusion(new_event_resources, event_actives, alert, availab
                     current_availability = available_amount(x, new_event_resources, event_actives, resources)
                     if current_availability <= 0:
                         alert(f"ERROR: El recurso '{x}' no se encuentra actualmente disponible.")
-                        new_event_resources[x] = new_event_resources.get(x, 0) + 1
                         valid = False
                     else:
                         new_event_resources[x] = new_event_resources.get(x, 0) + 1
@@ -28,6 +27,7 @@ def check_resources_exclusion(new_event_resources):
         if resource in rules:
             excluded = rules[resource]["exclude"]
             for x in excluded: 
-                excluded_set.add(x)    
+                if x not in new_event_resources:
+                    excluded_set.add(x)    
     return excluded_set
  

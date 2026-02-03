@@ -52,7 +52,11 @@ def find_available_start(new_event, desired_start, desired_end, event_actives, r
         if not conflict:
             return start, end
         else:
-            earliest_start = min(ev.start for ev in event_actives if ev.activated and start < ev.end and ev.start < end)
+            try:
+                earliest_start = min(ev.start for ev in event_actives if ev.activated and start < ev.end and ev.start < end)
+            except ValueError:
+                raise ValueError("No hay espacio disponible para programar el evento sin solapamiento.")
+            
             end = earliest_start
             if end <= start:
                 raise ValueError("No hay espacio disponible para programar el evento sin solapamiento.")

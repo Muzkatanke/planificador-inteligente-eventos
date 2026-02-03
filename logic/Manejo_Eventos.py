@@ -1,10 +1,11 @@
 import os
 from datetime import datetime
+from logic.Persistencia import save_events, load_events
 from logic.Datos import resources
 from logic.Recursos import check_resources_inclusion, check_resources_exclusion
 from logic.Evento import Event, event_names, ask_date, find_available_start, available_amount
 
-event_actives = []
+event_actives = load_events()
 
 def alert(message):
     os.system("cls")
@@ -14,7 +15,8 @@ def alert(message):
 
 def add_event():
     new_event = Event()
-   
+    auto_reprogram = False
+
     while True:
         print("SELECCIONE UN EVENTO (0 para terminar)")
         print("1.Instalación eléctrica en local\n"+
@@ -159,8 +161,6 @@ def add_event():
         confirm = input("¿Estás de acuerdo con esta fecha de inicio? (s/n): ")
 
         if confirm.lower() != "s":
-            for key, value in new_event.resources.items():
-                resources[key] += value
             alert("Evento cancelado, recursos liberados.")
             return
 
@@ -186,8 +186,6 @@ def add_event():
 
             if adjusted_end <= new_start:
                 alert("No hay espacio disponible para programar el evento sin solapamiento.")
-                for key, value in new_event.resources.items():
-                    resources[key] += value
                 return
 
             new_event.start, new_event.end = new_start, adjusted_end
@@ -213,8 +211,6 @@ def add_event():
                   f"Se ha reprogramado automáticamente desde {new_start} hasta {new_end}.")
             confirm = input("¿Aceptar esta fecha sugerida? (s/n): ")
             if confirm.lower() != "s":
-                for key, value in new_event.resources.items():
-                    resources[key] += value
                 alert("Evento cancelado, recursos liberados.")
                 return
             new_event.start, new_event.end = new_start, new_end
@@ -222,7 +218,9 @@ def add_event():
             new_event.start, new_event.end = desired_start, desired_end
 
     event_actives.append(new_event)
+    save_events(event_actives)
     alert("Evento creado exitosamente.")
+
     print("Resumen del evento creado:") 
     print(f"ID: {new_event.id}")
     print(f"Nombre: {new_event.name}") 
@@ -253,17 +251,18 @@ def remove_event():
         return
 
     event = event_actives.pop(option - 1)
-
-    if event.activated:
-        for key, value in event.resources.items():
-            resources[key] += value
-
-    alert(f"Evento [ID {event.id}] eliminado. Se recuperaron los recursos: {event.resources}")
+    save_events(event_actives)
+    alert(f"Evento [ID {event.id}] eliminado.")
     
 def view_events():
     if not event_actives:
         alert("No hay eventos activos que ver")
         return
     
+    os.system("cls")
     for event in event_actives:
-        alert(f"[ID {event.id}] {event.name}: Programado desde {event.start} hasta {event.end}. \nUtilizando los recursos: {event.resources}")
+        print(f"[ID {event.id}] {event.name}: Programado desde {event.start} hasta {event.end}.")
+        print(f"Recursos: {event.resources}\n")
+
+    input("Presiona Enter para continuar...")
+    os.system("cls")
